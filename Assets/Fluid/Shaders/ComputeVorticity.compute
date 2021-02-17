@@ -1,0 +1,29 @@
+
+#pragma kernel CSMain
+#include "./Assets/Fluid/Shaders/FluidConfig.cginc"
+
+float4 _Size;
+
+RWTexture3D<float4> _Write;
+Texture3D<float4> _Velocity;
+
+[numthreads(NUM_THREADS_X,NUM_THREADS_Y,NUM_THREADS_Z)]
+void CSMain (int3 id : SV_DispatchThreadID)
+{
+	int3 idL = int3(max(0, id.x - 1), id.y, id.z);
+	int3 idR = int3(min(_Size.x - 1, id.x + 1), id.y, id.z);
+	int3 idB = int3(id.x, max(0, id.y - 1), id.z);
+	int3 idT = int3(id.x, min(_Size.y - 1, id.y + 1), id.z);
+	int3 idD = int3(id.x, id.y, max(0, id.z - 1));
+	int3 idU = int3(id.x, id.y, min(_Size.z - 1, id.z + 1));
+
+	float4 L = _Velocity[idL];
+	float4 R = _Velocity[idR];
+	float4 B = _Velocity[idB];
+	float4 T = _Velocity[idT];
+	float4 D = _Velocity[idD];
+	float4 U = _Velocity[idU];
+
+	float3 vorticity = 0.5 * float3(((T.z - B.z) - (U.y - D.y)), ((U.x - D.x) - (R.z - L.z)), ((R.y - L.y) - (T.x - B.x)));
+	_Write[id] = float4(vorticity, 0);
+}

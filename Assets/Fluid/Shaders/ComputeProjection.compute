@@ -1,0 +1,69 @@
+
+#pragma kernel CSMain
+#include "./Assets/Fluid/Shaders/FluidConfig.cginc"
+
+float4 _Size;
+
+Texture3D<float4> _Pressure;
+
+RWTexture3D<float4> _Write;
+Texture3D<float4> _Obstacles;
+Texture3D<float4> _Velocity;
+
+[numthreads(NUM_THREADS_X,NUM_THREADS_Y,NUM_THREADS_Z)]
+void CSMain (int3 id : SV_DispatchThreadID)
+{   
+    int3 idL = int3(max(0, id.x - 1), id.y, id.z);
+    int3 idR = int3(min(_Size.x - 1, id.x + 1), id.y, id.z);
+    int3 idB = int3(id.x, max(0, id.y - 1), id.z);
+    int3 idT = int3(id.x, min(_Size.y - 1, id.y + 1), id.z);
+    int3 idD = int3(id.x, id.y, max(0, id.z - 1));
+    int3 idU = int3(id.x, id.y, min(_Size.z - 1, id.z + 1));
+
+    float4 L = _Pressure[idL];
+    float4 R = _Pressure[idR];
+    float4 B = _Pressure[idB];
+    float4 T = _Pressure[idT];
+    float4 D = _Pressure[idD];
+    float4 U = _Pressure[idU];
+    float4 C = _Pressure[id];
+    
+    L = lerp(L, C, _Obstacles[idL].x);
+    R = lerp(R, C, _Obstacles[idR].x);
+    B = lerp(B, C, _Obstacles[idB].x);
+    T = lerp(T, C, _Obstacles[idT].x);
+    D = lerp(D, C, _Obstacles[idD].x);
+    U = lerp(U, C, _Obstacles[idU].x);
+
+    float4 mask = float4(1, 1, 1, 1);
+    mask.x = step(_Obstacles[idL].x, 0.1);
+    mask.x = step(_Obstacles[idR].x, 0.1);
+    mask.y = step(_Obstacles[idB].x, 0.1);
+    mask.y = step(_Obstacles[idT].x, 0.1);
+    mask.z = step(_Obstacles[idD].x, 0.1);
+    mask.z = step(_Obstacles[idU].x, 0.1);
+
+	float4 v = _Velocity[id] - float4(R.x - L.x, T.x - B.x, U.x - D.x, 0) * 0.5;
+    
+    _Write[id] = lerp(v * mask, float4(0, 0, 0, 0), _Obstacles[id].x);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

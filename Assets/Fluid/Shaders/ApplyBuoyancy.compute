@@ -1,0 +1,42 @@
+
+#pragma kernel CSMain
+#include "./Assets/Fluid/Shaders/FluidConfig.cginc"
+
+float4 _Size, _Up;
+float _AmbientTemperature, _DeltaTime, _Buoyancy, _Weight;
+
+RWTexture3D<float4> _Write;
+Texture3D<float4> _Velocity;
+Texture3D<float4> _Atmosphere;
+
+[numthreads(NUM_THREADS_X,NUM_THREADS_Y,NUM_THREADS_Z)]
+void CSMain (int3 id : SV_DispatchThreadID)
+{
+    float4 A = _Atmosphere[id];
+    float3 V = _Velocity[id].xyz;
+    
+    float3 acc = (_DeltaTime * (A.x - _AmbientTemperature) * _Buoyancy - A.y * _Weight) * _Up.xyz;
+    V += lerp(float3(0,0,0), acc, step(_AmbientTemperature, A.x));
+	_Write[id] = float4(V, 0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

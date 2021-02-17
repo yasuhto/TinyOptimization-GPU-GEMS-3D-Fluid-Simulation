@@ -1,0 +1,39 @@
+
+#include "./Assets/Fluid/Shaders/FluidConfig.cginc"
+
+float _Radius, _TemperatureAmount, _DensityAmount, _DeltaTime;
+float4 _Pos, _Size;
+
+RWTexture3D<float4> _Write;
+Texture3D<float4> _Read;
+
+#pragma kernel GaussImpulse
+
+[numthreads(NUM_THREADS_X,NUM_THREADS_Y,NUM_THREADS_Z)]
+void GaussImpulse(uint3 id : SV_DispatchThreadID)
+{
+
+	float3 pos = id/(_Size.xyz) - _Pos.xyz;
+	float mag = pos.x*pos.x + pos.y*pos.y + pos.z*pos.z;
+	float rad2 = _Radius * _Radius;
+
+	float dT = exp(-mag / rad2) * _TemperatureAmount * _DeltaTime;
+	float dD = exp(-mag / rad2) * _DensityAmount * _DeltaTime;
+
+	_Write[id] = _Read[id] + float4(dT, dD, 0, 0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

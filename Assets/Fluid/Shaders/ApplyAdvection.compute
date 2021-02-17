@@ -1,0 +1,59 @@
+#include "./Assets/Fluid/Shaders/FluidConfig.cginc"
+
+float4 _Size;
+float _DeltaTime;
+float4 _Dissipate;
+float _Forward;
+
+Texture3D<float4> _Velocity;
+Texture3D<float4> _Obstacles;
+Texture3D<float4> _Read;
+RWTexture3D<float4> _Write;
+
+SamplerState _LinearClamp;
+
+//  移流元のUV座標を返します
+float3 GetAdvectedUV(uint3 id)
+{
+    float w = _Size.x;
+    float h = _Size.y;
+    float d = _Size.z;
+
+    //  ボクセルの中心座標を求める
+    float3 px = float3(1.0 / w, 1.0 / h, 1.0 / d);
+    float3 uv = float3(id.x / w, id.y / h, id.z / d) + px * 0.5;
+
+    float3 velocity = _Velocity.SampleLevel(_LinearClamp, uv, 0).xyz;
+    float3 prevId = id - velocity * _Forward * _DeltaTime;
+    
+    return prevId / _Size.xyz + px * 0.5;
+}
+
+#pragma kernel Advect
+
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
+void Advect(uint3 id : SV_DispatchThreadID)
+{
+    float3 auv = GetAdvectedUV(id);
+    float4 A = _Read.SampleLevel(_LinearClamp, auv, 0) * _Dissipate;
+
+    _Write[id] = lerp(A, float4(0, 0, 0, 0), _Obstacles[id].x);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

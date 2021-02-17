@@ -1,0 +1,35 @@
+
+#pragma kernel CSMain
+#include "./Assets/Fluid/Shaders/FluidConfig.cginc"
+
+float _DeltaTime, _Epsilon;
+float4 _Size;
+
+Texture3D<float4> _Vorticity;
+RWTexture3D<float4> _Write;
+Texture3D<float4> _Read;
+
+[numthreads(NUM_THREADS_X,NUM_THREADS_Y,NUM_THREADS_Z)]
+void CSMain (int3 id : SV_DispatchThreadID)
+{ 
+    int3 idL = int3(max(0, id.x - 1), id.y, id.z);
+    int3 idR = int3(min(_Size.x - 1, id.x + 1), id.y, id.z);
+    int3 idB = int3(id.x, max(0, id.y - 1), id.z);
+    int3 idT = int3(id.x, min(_Size.y - 1, id.y + 1), id.z);
+    int3 idD = int3(id.x, id.y, max(0, id.z - 1));
+    int3 idU = int3(id.x, id.y, min(_Size.z - 1, id.z + 1));
+
+	float omegaL = length(_Vorticity[ idL ]);
+    float omegaR = length(_Vorticity[ idR ]);    
+    float omegaB = length(_Vorticity[ idB ]);
+    float omegaT = length(_Vorticity[ idT ]);    
+    float omegaD = length(_Vorticity[ idD ]);
+    float omegaU = length(_Vorticity[ idU ]);
+    
+    float4 omega = _Vorticity[id];
+    float3 eta = 0.5 * float3( omegaR - omegaL, omegaT - omegaB, omegaU - omegaD );
+    eta = normalize( eta + float3(0.001,0.001,0.001) );
+	float4 force = _DeltaTime * _Epsilon * float4(eta.y * omega.z - eta.z * omega.y, eta.z * omega.x - eta.x * omega.z, eta.x * omega.y - eta.y * omega.x, 0);
+	
+    _Write[id] = _Read[id] + force;
+}

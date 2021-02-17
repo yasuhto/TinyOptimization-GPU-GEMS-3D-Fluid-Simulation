@@ -1,0 +1,47 @@
+
+#pragma kernel CSMain
+#include "./Assets/Fluid/Shaders/FluidConfig.cginc"
+
+float4 _Size;
+
+RWTexture3D<float4> _Write;
+
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
+void CSMain(int3 id : SV_DispatchThreadID)
+{
+
+	int idx = id.x + id.y * _Size.x + id.z * _Size.x * _Size.y;
+
+	float obstacle = 0;
+
+	if (id.x - 1 < 0) obstacle = 1;
+	if (id.x + 1 > (int)_Size.x - 1) obstacle = 1;
+
+	if (id.y - 1 < 0) obstacle = 1;
+	if (id.y + 1 > (int)_Size.y - 1) obstacle = 1;
+
+	if (id.z - 1 < 0) obstacle = 1;
+	if (id.z + 1 > (int)_Size.z - 1) obstacle = 1;
+
+	_Write[id] = float4(obstacle, 0, 0, 0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
