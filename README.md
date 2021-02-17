@@ -2,7 +2,7 @@
  
 This code is a tiny optimized version of [GPU-GEMS-3D-Fluid-Simulation](https://github.com/Scrawk/GPU-GEMS-3D-Fluid-Simulation).
 
-- Reduce if statements
+- Replace if statements with lerp() and step()
 - Use RenderTexture instead of ComputeBuffer
 
 #### Original
